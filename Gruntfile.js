@@ -28,7 +28,7 @@ var frontend_dir = path.join(__dirname, settings.frontend_dir);
 // These are the files containing un-cachbusted URLs that need to get
 // replaced with cachedbusted URLs.
 var stringReplaceFiles = {};
-stringReplaceFiles[settings.db_dir + '/data.json'] = settings.db_dir + '/data.json';
+stringReplaceFiles[settings.db_dir + '/preloaded.json'] = settings.db_dir + '/preloaded.json';
 stringReplaceFiles[settings.frontend_dir + '/lite/media/css/'] = settings.frontend_dir + '/lite/media/css/*.min.css';
 stringReplaceFiles[settings.frontend_dir + '/lite/media/js/'] = settings.frontend_dir + '/lite/media/js/*.min.js';
 stringReplaceFiles[settings.frontend_dir + '/lite/media/js/lib/'] = settings.frontend_dir + '/lite/media/js/lib/*.min.js';
@@ -239,8 +239,20 @@ module.exports = function (grunt) {
         grunt.verbose.writeln('Hashing ' + url);
 
         var hash = computeHash(grunt, grunt.file.read(fn)).substr(0, 7);
-        cachebustedUrls.push('/lite/' + utils.cachebust(url, hash));
+
+        url = '/' + url;
+
+        var cachebustedUrl = utils.cachebust(url, hash);
+
+        cachebustedUrls.push(cachebustedUrl);
+
+        replacements.push({
+          pattern: url,
+          replacement: cachebustedUrl
+        });
       });
+
+      console.log(replacements)
 
       // Add cachebusting-querystring parameters to resources we want to list in
       // appcache manifest (see bug 993919).
@@ -255,6 +267,10 @@ module.exports = function (grunt) {
 
       // Replace across all source files all occurrences of original URLs with
       // cachebusted URLs.
+      // replacements.push({
+      //   pattern: /(=['"])\/(?!lite\/)/ig,
+      //   replacement: '$1/lite/'
+      // });
 
       grunt.config('string-replace.dist.options.replacements', replacements);
 
